@@ -1,8 +1,44 @@
+@import url('https://fonts.googleapis.com/css?family=Quicksand:100,200,300,400,500,600,700,800,900');
 @import 'tailwindcss';
 
 @plugin "@iconify/tailwind4";
 
 @theme {
-    --font-sans: 'Instrument Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
-        'Segoe UI Symbol', 'Noto Color Emoji';
+    --font-sans: 'Quicksand', sans-serif;
+}
+
+.base-input{
+    @apply block w-full rounded-md px-3 py-2 text-gray-900 outline-1 -outline-offset-1 outline-gray-300 placeholder:text-gray-400 focus:outline-2 focus:-outline-offset-2 focus:outline-teal-800;
+}
+
+.base-select{
+    @apply w-full appearance-none rounded-md py-2 pr-8 pl-3 text-gray-900 outline-1 -outline-offset-1 outline-gray-300 focus:outline-2 focus:-outline-offset-2 focus:outline-teal-800;
+}
+
+.base-button{
+    @apply rounded flex items-center gap-x-3 px-3 py-2 text-sm font-semibold shadow-md focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gray-800;
+}
+
+.table-th{
+    @apply px-3 py-2.5 font-semibold;
+}
+
+.table-th-l{
+    @apply w-1 py-2.5 pl-4 pr-3 text-left font-semibold sm:pl-6;
+}
+
+.table-th-r{
+    @apply w-1 relative py-2.5 pl-3 pr-4 sm:pr-6 font-semibold;
+}
+
+.table-td-l{
+    @apply py-1.5 pl-4 pr-3 text-left font-semibold text-slate-800 sm:pl-6;
+}
+
+.table-td{
+    @apply px-3 py-1.5 text-slate-800;
+}
+
+.table-td-r{
+    @apply px-3 py-1.5 text-gray-500 flex justify-end;
 }
