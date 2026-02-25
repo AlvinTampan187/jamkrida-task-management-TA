@@ -1,5 +1,5 @@
 <template>
-  <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between text-sm mb-4 gap-y-2 sm:gap-y-0">
+  <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between text-sm mb-2 mt-2 gap-y-2 sm:gap-y-0 sm:gap-x-8">
     <div class="flex items-center gap-x-2">
       Tampilkan
       <select v-model="modelPerPage" @change="emitUpdate" class="base-select bg-white">

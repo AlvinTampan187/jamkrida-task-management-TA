@@ -3,7 +3,7 @@
     <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Outbox</title>
+        <title>Task Management</title>
     </head>
     <body class="bg-gray-100">
         <div id="app"></div>

@@ -32,6 +32,21 @@ const routes = [
           name: 'profile',
           component: () => import('@/pages/Profile.vue')
         },
+         {
+          path: '/kinerja',
+          name: 'kinerja',
+          component: () => import('@/pages/Kinerja.vue')
+        },
+        {
+          path: '/Detail',
+          name: 'detail',
+          component: () => import('@/pages/Detail.vue')
+        },
+        {
+          path: '/Form',
+          name: 'form',
+          component: () => import('@/pages/Form.vue')
+        },
         ...settings,
       ]
     },

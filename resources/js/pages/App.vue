@@ -137,13 +137,13 @@ import { ref } from 'vue'
 import { Dialog, DialogPanel, TransitionChild, TransitionRoot } from '@headlessui/vue'
 
 const navigation = [
-  { name: 'Dashboard', href: '#', icon: 'icon-[tabler--dashboard]', current: false },
-  { name: 'Team', href: '#', icon: 'icon-[tabler--users]', current: false },
-  { name: 'Projects', href: '#', icon: 'icon-[tabler--folder]', current: false },
-  { name: 'Calendar', href: '#', icon: 'icon-[tabler--calendar]', current: false },
-  { name: 'Documents', href: '#', icon: 'icon-[tabler--file]', current: false },
-  { name: 'Reports', href: '#', icon: 'icon-[tabler--printer]', current: false },
-  { name: 'Settings', href: '#/settings', icon: 'icon-[tabler--settings]', current: false },
+  { name: 'Tugas', href: '#', icon: 'icon-[mingcute--task-2-line]', current: false },
+  // { name: 'Team', href: '#', icon: 'icon-[tabler--users]', current: false },
+  // { name: 'Projects', href: '#', icon: 'icon-[tabler--folder]', current: false },
+  // { name: 'Calendar', href: '#', icon: 'icon-[tabler--calendar]', current: false },
+  // { name: 'Documents', href: '#', icon: 'icon-[tabler--file]', current: false },
+  // { name: 'Reports', href: '#', icon: 'icon-[tabler--printer]', current: false },
+  { name: 'Laporan Kinerja', href: '#/Kinerja', icon: 'icon-[mdi--performance]', current: false },
 ]
 
 const teams = [
