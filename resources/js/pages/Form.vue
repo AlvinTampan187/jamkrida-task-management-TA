@@ -29,21 +29,13 @@
       </div>
     </div>
 
-    <!-- Jenis Laporan -->
+    <!-- Keterangan -->
     <div>
-      <label class="block font-medium">Jenis Laporan</label>
-      <textarea v-model="form.jenis_laporan"
+      <label class="block font-medium">Keterangan Laporan</label>
+      <textarea v-model="form.keterangan_laporan"
         class="border rounded w-full p-2"></textarea>
     </div>
 
-    <!-- Solusi Jawaban -->
-    <div>
-      <label class="block font-medium">Solusi Jawaban</label>
-      <textarea v-model="form.solusi"
-        class="border rounded w-full p-2"></textarea>
-    </div>
-
-    
   </div>
 </template>
 
@@ -52,32 +44,44 @@ import Title from '@/components/Title.vue'
 import { ref } from 'vue'
 import { getSuccess, getError } from '@/services/alertService'
 import { useRouter } from 'vue-router'
+import axios from 'axios'
 
 const router = useRouter()
 
 const goBack = () => {
-  router.push('/dashboard')
+  router.push('/atasan/dashboard')
 }
 
 const form = ref({
   bagian: '',
   kategori: '',
-  jenis_laporan: '',
-  solusi: '',
-  foto: null
+  keterangan_laporan: ''
 })
 
-const handleFile = (e) => {
-  form.value.foto = e.target.files[0]
-}
+const submitForm = async () => {
 
-const submitForm = () => {
-  if (!form.value.bagian || !form.value.kategori || !form.value.jenis_laporan) {
+  if (!form.value.bagian || !form.value.kategori || !form.value.keterangan_laporan) {
     getError('Lengkapi semua data')
     return
   }
 
-  console.log(form.value)
-  getSuccess('Data berhasil disimpan')
+  try {
+
+    await axios.post('http://localhost:8000/api/tugas', {
+      user_id: 1,
+      bagian: form.value.bagian,
+      kategori: form.value.kategori,
+      keterangan_laporan: form.value.keterangan_laporan,
+      status: 'Penugasan' // 🔥 penting
+    })
+
+    getSuccess('Data berhasil disimpan')
+    router.push('/atasan/dashboard')
+
+  } catch (error) {
+    console.log(error.response)
+    getError('Gagal menyimpan data')
+  }
+
 }
 </script>

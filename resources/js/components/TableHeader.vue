@@ -10,7 +10,7 @@
       data
     </div>
 
-    <div class="flex items-center gap-x-2">
+    <!-- <div class="flex items-center gap-x-2">
       Pencarian
       <input
         v-model="modelSearch"
@@ -18,7 +18,7 @@
         placeholder="Cari..."
         class="base-input bg-white"
       />
-    </div>
+    </div> -->
   </div>
 </template>
 

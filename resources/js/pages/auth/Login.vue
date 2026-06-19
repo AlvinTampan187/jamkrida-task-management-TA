@@ -1,73 +1,130 @@
 <template>
   <div class="flex min-h-full flex-1 flex-col justify-center px-6 py-12 lg:px-8">
+
     <div class="sm:mx-auto sm:w-full sm:max-w-sm">
-      <img
-        class="mx-auto h-10 w-auto"
-        src="https://tailwindcss.com/plus-assets/img/logos/mark.svg?color=teal&shade=600"
-        alt="Your Company"
-      />
-      <h2 class="mt-10 text-center text-2xl/9 font-bold tracking-tight text-gray-900">
-        Log in to your account
+      
+      <!-- ICON TASK -->
+      <div class="flex justify-center">
+        <img :src="'/logo.png'" class="w-50 h-50 object-contain" />
+      </div>
+      <!-- <h2 class="mt-1 text-center text-1xl font-bold text-gray-900">
+        Task Management dan Monitoring Kinerja
+        PT.Jamkrida Kaltim
+      </h2> -->
+      <h2 class="mt-1 text-center text-2xl font-bold text-gray-900">
+        Masukkan Akun Anda
       </h2>
     </div>
 
-    <div class="mt-10 sm:mx-auto sm:w-full sm:max-w-sm">
-      <form class="space-y-6 bg-white p-4 rounded" action="#" method="POST">
+    <div class="mt-5 sm:mx-auto sm:w-full sm:max-w-sm">
+
+      <!-- FORM -->
+      <form
+        class="space-y-6 bg-white p-4 rounded"
+        @submit.prevent="login"
+      >
+
+        <!-- USERNAME -->
         <div>
-          <label for="username" class="block text-sm/6 font-medium text-gray-900">
+          <label class="block text-sm font-medium text-gray-900">
             Username
           </label>
-          <div class="mt-2">
-            <input
-              type="text"
-              name="username"
-              id="username"
-              autocomplete="username"
-              required
-              class="base-input text-sm/6"
-            />
-          </div>
+
+          <input
+            v-model="username"
+            type="text"
+            required
+            class="base-input w-full"
+          />
         </div>
 
+        <!-- PASSWORD -->
         <div>
-          <div class="flex items-center justify-between">
-            <label for="password" class="block text-sm/6 font-medium text-gray-900">
-              Password
-            </label>
-            <div class="text-sm">
-              <a href="#/forgot" class="font-semibold text-teal-600 hover:text-teal-500">
-                Forgot password?
-              </a>
-            </div>
-          </div>
-          <div class="mt-2">
-            <input
-              type="password"
-              name="password"
-              id="password"
-              autocomplete="current-password"
-              required
-              class="base-input"
-            />
-          </div>
+          <label class="block text-sm font-medium text-gray-900">
+            Password
+          </label>
+
+          <input
+            v-model="password"
+            type="password"
+            required
+            class="base-input w-full"
+          />
         </div>
 
+        <!-- BUTTON -->
         <div>
           <button
             type="submit"
-            class="base-button flex w-full justify-center bg-teal-600 hover:bg-teal-500 text-white text-sm/6"
+            :disabled="loading"
+            class="base-button flex w-full justify-center bg-teal-600 hover:bg-teal-500 text-white"
           >
-            Log in
+            <span v-if="loading">Loading...</span>
+            <span v-else>Masuk</span>
           </button>
         </div>
+
       </form>
 
-      <p class="mt-10 text-center text-sm/6 text-gray-500">
-        Not a member?
-        <a href="#/register" class="font-semibold text-teal-600 hover:text-teal-500">
-          Register
-        </a>
-      </p>
     </div>
+
   </div>
 </template>
+
+<script setup>
+
+import { ref } from 'vue'
+import axios from 'axios'
+import { useRouter } from 'vue-router'
+
+const router = useRouter()
+
+const username = ref('')
+const password = ref('')
+const loading = ref(false)
+
+const login = async () => {
+
+  loading.value = true
+
+  try {
+
+    const res = await axios.post(
+      'http://localhost:8000/api/login',
+      {
+        username: username.value,
+        password: password.value
+      }
+    )
+
+    const user = res.data.user
+
+    // simpan user ke localStorage
+    localStorage.setItem('user', JSON.stringify(user))
+
+    // redirect berdasarkan role
+    if (user.role === 'atasan') {
+      router.push('/atasan/dashboard')
+    } else {
+      router.push('/karyawan/dashboard')
+    }
+
+  } catch (error) {
+
+    console.log(error)
+
+    if (error.response?.status === 401) {
+      alert('Username atau password salah')
+    } else {
+      alert('Terjadi kesalahan pada server')
+    }
+
+  } finally {
+
+    loading.value = false
+
+  }
+
+}
+
+</script>
