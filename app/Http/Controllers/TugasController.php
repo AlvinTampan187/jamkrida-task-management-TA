@@ -241,19 +241,19 @@ class TugasController extends Controller
     }
 
 
-    /* =========================
-       UNASSIGN
-    ========================= */
-    public function unassign($id, $userId)
-    {
-        Tugas::findOrFail($id)
-            ->users()
-            ->detach($userId);
+    // /* =========================
+    //    UNASSIGN
+    // ========================= */
+    // public function unassign($id, $userId)
+    // {
+    //     Tugas::findOrFail($id)
+    //         ->users()
+    //         ->detach($userId);
 
-        return response()->json([
-            'message' => 'Karyawan dilepas'
-        ]);
-    }
+    //     return response()->json([
+    //         'message' => 'Karyawan dilepas'
+    //     ]);
+    // }
 
 
     /* =========================

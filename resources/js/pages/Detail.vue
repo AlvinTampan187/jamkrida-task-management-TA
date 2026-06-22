@@ -43,17 +43,31 @@
         <div class="bg-white p-6 rounded shadow">
           <h1 class="font-semibold mb-3">Informasi Tugas</h1>
 
-          <input v-model="task.kategori" placeholder="Kategori"
-            class="w-full border p-2 mb-2 rounded" />
+          <input 
+            v-model="task.kategori" 
+            placeholder="Kategori"
+            :disabled="user?.role !== 'atasan'"
+            class="w-full border p-2 mb-2 rounded"
+            :class="user?.role !== 'atasan' ? 'bg-gray-100 cursor-not-allowed' : ''"
+          />
 
-          <input v-model="task.bagian" placeholder="Bagian"
-            class="w-full border p-2 mb-2 rounded" />
+          <input 
+            v-model="task.bagian" 
+            placeholder="Bagian"
+            :disabled="user?.role !== 'atasan'"
+            class="w-full border p-2 mb-2 rounded"
+            :class="user?.role !== 'atasan' ? 'bg-gray-100 cursor-not-allowed' : ''"
+          />
 
-          <textarea v-model="task.keterangan_laporan"
+          <textarea 
+            v-model="task.keterangan_laporan"
             placeholder="Keterangan"
-            class="w-full border p-2 rounded"></textarea>
+            :disabled="user?.role !== 'atasan'"
+            class="w-full border p-2 rounded"
+            :class="user?.role !== 'atasan' ? 'bg-gray-100 cursor-not-allowed' : ''"
+          ></textarea>
         </div>
-
+        
         <!-- RINCIAN -->
         <div class="bg-white p-6 rounded shadow">
           <div class="flex justify-between mb-3">

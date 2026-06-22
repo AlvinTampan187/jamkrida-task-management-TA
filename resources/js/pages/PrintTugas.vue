@@ -48,34 +48,49 @@
     <!-- PENUGASAN -->
     <section class="section">
       <h2>Petugas</h2>
-      <ul>
-        <li v-for="u in assignedUsers" :key="u.id">{{ u.name }} - {{ u.bagian }}</li>
-        <li v-if="assignedUsers.length === 0">-</li>
-      </ul>
+      <table class="table">
+        <thead>
+          <tr>
+            <th>No</th>
+            <th>Nama</th>
+            <th>Bagian</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr v-for="(u, i) in assignedUsers" :key="u.id">
+            <td>{{ i + 1 }}</td>
+            <td>{{ u.name }}</td>
+            <td>{{ u.bagian }}</td>
+          </tr>
+          <tr v-if="assignedUsers.length === 0">
+            <td colspan="3" style="text-align:center">-</td>
+          </tr>
+        </tbody>
+      </table>
     </section>
 
     <!-- LAMPIRAN -->
     <section class="section">
       <h2>Lampiran</h2>
-      <ul>
-        <li v-for="l in lampiran" :key="l.id">
-          {{ l.keterangan || l.nama_file }}
-        </li>
-        <li v-if="lampiran.length === 0">-</li>
-      </ul>
-    </section>
-
-    <!-- DISKUSI -->
-    <section class="section">
-      <h2>Diskusi</h2>
-      <div v-for="d in diskusi" :key="d.id" class="diskusi-item">
-        <p class="nama">
-          {{ d.user?.name || 'User' }}
-          <span>({{ formatDateTime(d.created_at) }})</span>
-        </p>
-        <p>{{ d.pesan }}</p>
-      </div>
-      <p v-if="diskusi.length === 0">-</p>
+      <table class="table">
+        <thead>
+          <tr>
+            <th>No</th>
+            <th>Nama File</th>
+            <th>Keterangan</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr v-for="(l, i) in lampiran" :key="l.id">
+            <td>{{ i + 1 }}</td>
+            <td>{{ l.nama_file }}</td>
+            <td>{{ l.keterangan || '-' }}</td>
+          </tr>
+          <tr v-if="lampiran.length === 0">
+            <td colspan="3" style="text-align:center">-</td>
+          </tr>
+        </tbody>
+      </table>
     </section>
 
     <!-- TTD -->
