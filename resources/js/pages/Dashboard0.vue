@@ -66,8 +66,8 @@
 
             <tr v-for="item in items" :key="item.id" class="hover:bg-gray-50">
 
-              <td class="px-4 py-3 text-sm text-gray-900">
-                {{ item.tanggal }}
+              <td class="px-4 py-3 text-sm text-gray-900">        
+                  {{ item.tanggal }}
               </td>
 
               <td class="px-4 py-3 text-sm text-gray-500">
@@ -78,7 +78,7 @@
                 {{ item.keterangan }}
               </td>
 
-              <td class="px-4 py-3 text-sm text-right">
+              <td class="px-4 py-3 text-sm text-right relative">
                 <span
                   :class="[
                     'inline-flex rounded-full px-2 text-xs font-semibold',
@@ -95,17 +95,21 @@
                 </span>
               </td>
 
-              <td class="px-4 py-3 text-sm text-right">
+              <td class="px-4 py-3 text-sm text-right relative">
                 <div class="flex justify-end gap-2">
 
                   <button
                     @click="goDetail(item.id)"
-                    class="text-blue-600 hover:text-blue-800"
+                    class="bg-teal-600 text-white px-2 py-1 rounded text-xs hover:bg-teal-800"
                   >
                     Detail
                   </button>
 
                 </div>
+                <span 
+                  v-if="item.ada_menunggu"
+                  class="absolute top-1/2 right-2 -translate-y-1/2 w-3 h-3 bg-red-500 rounded-full animate-pulse"
+                ></span>
               </td>
 
             </tr>
@@ -210,7 +214,10 @@ const loadTugas = async () => {
       tanggal: new Date(t.created_at).toLocaleDateString('id-ID'),
       bagian: t.bagian,
       keterangan: t.keterangan_laporan,
-      status: t.status ?? 'Penugasan'
+      status: t.status ?? 'Penugasan',
+
+      // 🔴 TAMBAHAN
+      ada_menunggu: t.ada_menunggu
     }))
 
     totalItems.value = items.value.length

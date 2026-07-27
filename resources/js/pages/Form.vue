@@ -1,10 +1,10 @@
 <template>
   <Title title="Form Permintaan">
     <template #actions>
-      <button @click="submitForm" class="p-2 bg-teal-600 text-white rounded hover:bg-teal-700 mr-2">
+      <button @click="submitForm" class="p-2 bg-teal-600 text-white rounded hover:bg-teal-800 mr-2">
         Simpan
       </button>
-      <button @click="goBack" class="p-2 bg-yellow-400 text-white rounded hover:bg-yellow-500">
+      <button @click="goBack" class="bg-gray-600 text-white px-4 py-2 rounded hover:bg-gray-800">
         Kembali
       </button>
     </template>
@@ -15,8 +15,40 @@
     <!-- Bagian -->
     <div>
       <label class="block font-medium">Bagian</label>
-      <input v-model="form.bagian" type="text"
-        class="border rounded w-full p-2" />
+      <select 
+        v-model="form.bagian"
+        class="border rounded w-full p-2"
+      >
+
+        <option value="">
+          Pilih Bagian
+        </option>
+
+        <option value="IT">
+          IT
+        </option>
+
+        <option value="Keuangan">
+          Keuangan
+        </option>
+
+        <option value="SDM">
+          SDM
+        </option>
+
+        <option value="Pemasaran">
+          Pemasaran
+        </option>
+
+        <option value="Operasional">
+          Operasional
+        </option>
+
+        <option value="HR">
+          HR
+        </option>
+
+      </select>
     </div>
 
     <!-- Kategori -->

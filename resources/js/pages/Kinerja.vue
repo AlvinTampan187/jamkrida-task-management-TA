@@ -98,10 +98,33 @@
       </h3>
 
       <div v-for="k in distribusiBeban" :key="k.id" class="mb-3">
-        <div class="flex justify-between text-sm mb-1">
-          <span>{{ k.nama }}</span>
-          <span>{{ k.tugas }}</span>
+
+        <div class="flex items-center justify-between text-sm mb-1">
+
+          <span class="font-medium whitespace-nowrap">
+            {{ k.nama }}
+          </span>
+
+
+          <div class="flex items-center gap-3">
+
+            <span>
+              {{ k.tugas }} tugas
+            </span>
+
+
+            <button
+              @click="detailKaryawan(k.id)"
+              class="bg-teal-600 text-white px-2 py-1 rounded text-xs hover:bg-teal-800 whitespace-nowrap"
+            >
+              Detail
+            </button>
+
+          </div>
+
+
         </div>
+
 
         <div class="bg-gray-200 h-2 rounded">
           <div 
@@ -109,6 +132,7 @@
             :style="{ width: barWidth(k.tugas) + '%' }"
           ></div>
         </div>
+
       </div>
     </div>
 
@@ -239,6 +263,10 @@ const distribusiBeban = ref([])
 const bagianList = ref([])
 
 const filterBagian = ref('')
+
+const detailKaryawan = (id) => {
+  router.push(`/kinerja/karyawan/${id}`)
+}
 
 const printKinerja = () => {
   const url = `${window.location.origin}/#/print-kinerja`

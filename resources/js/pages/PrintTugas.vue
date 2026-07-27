@@ -254,6 +254,7 @@ onMounted(async () => {
 @media print {
   body {
     -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
   }
 
   .section {

@@ -70,42 +70,177 @@
         
         <!-- RINCIAN -->
         <div class="bg-white p-6 rounded shadow">
+
           <div class="flex justify-between mb-3">
             <h3 class="font-semibold">Rincian Tugas</h3>
 
-            <button @click="addDetail"
-              class="bg-green-500 text-white px-2 py-1 rounded">
+            <!-- TAMBAH HANYA UNTUK KARYAWAN -->
+            <button 
+              v-if="user?.role === 'karyawan' && task.status !== 'Selesai'" 
+              @click="addDetail"
+              class="bg-teal-600 text-white px-2 py-1 rounded hover:bg-teal-800"
+            >
               + Tambah
             </button>
+
           </div>
 
-          <div v-for="(item,index) in details"
+
+          <div 
+            v-for="(item,index) in details"
             :key="item.id || index"
-            class="flex gap-2 mb-2 items-center flex-wrap">
+            class="border rounded p-3 mb-3"
+          >
 
-            <input v-model="item.deskripsi"
-              class="flex-1 border p-1 rounded" />
 
-            <select v-model="item.status"
-              class="border p-1 rounded">
-              <option>Penugasan</option>
-              <option>Progres</option>
-              <option>Selesai</option>
-            </select>
+            <div class="flex gap-3 items-end flex-wrap">
 
-            <input type="date"
-              v-model="item.tanggal"
-              class="border p-1 rounded" />
 
-            <!-- DELETE -->
-            <button 
-              @click="removeDetail(index)"
-              class="text-red-500 hover:text-red-700 text-xl"
-            >
-              <span class="icon-[material-symbols-light--delete-outline]"></span>
-            </button>
+              <!-- DESKRIPSI -->
+              <div class="flex-1">
+
+                <label class="text-sm text-gray-600 block mb-1">
+                  Deskripsi
+                </label>
+
+                <input 
+                  v-model="item.deskripsi"
+
+                  :disabled="!canEditDetail(item)"
+
+                  class="w-full border p-1 rounded"
+
+                  :class="!canEditDetail(item)
+                  ? 'bg-gray-100 cursor-not-allowed'
+                  : ''"
+                />
+
+              </div>
+
+
+
+              <!-- STATUS -->
+              <div>
+
+                <label class="text-sm text-gray-600 block mb-1">
+                  Status
+                </label>
+
+
+                <select
+                  v-model="item.status"
+
+                  disabled
+
+                  class="border p-1 rounded bg-gray-100 cursor-not-allowed"
+                >
+
+                  <option>Penugasan</option>
+                  <option>Progres</option>
+                  <option>Menunggu Persetujuan</option>
+                  <option>Selesai</option>
+
+                </select>
+
+
+              </div>
+
+
+
+              <!-- TANGGAL -->
+              <div>
+
+                <label class="text-sm text-gray-600 block mb-1">
+                  Estimasi Selesai
+                </label>
+
+
+                <input 
+                  type="date"
+
+                  v-model="item.tanggal"
+
+                  :disabled="!canEditDetail(item)"
+
+                  class="border p-1 rounded"
+
+                  :class="!canEditDetail(item)
+                  ? 'bg-gray-100 cursor-not-allowed'
+                  : ''"
+                />
+
+              </div>
+
+
+
+              <!-- BUTTON KARYAWAN AJUKAN SELESAI -->
+              <button
+                v-if="
+                  user?.role === 'karyawan'
+                  && task.status !== 'Selesai'
+                  && item.id
+                  && item.status !== 'Selesai'
+                  && item.status !== 'Menunggu Persetujuan'
+                "
+
+                @click="ajukanSelesai(item.id)"
+
+                class="bg-green-600 text-white px-3 py-1 rounded mb-1 hover:bg-green-800"
+              >
+                Ajukan Selesai
+              </button>
+
+
+
+              <!-- BUTTON ATASAN SETUJUI -->
+              <button
+
+                v-if="
+                  user?.role === 'atasan'
+                  && item.status === 'Menunggu Persetujuan'
+                "
+
+                @click="setujuiSelesai(item.id)"
+
+                class="bg-blue-600 text-white px-3 py-1 rounded mb-1 hover:bg-blue-800"
+              >
+                Setujui Selesai
+              </button>
+
+
+
+              <!-- DELETE HANYA ATASAN -->
+              <button 
+                v-if="user?.role === 'atasan' && task.status !== 'Selesai'"
+
+                @click="removeDetail(index)"
+
+                class="text-xl text-red-500 hover:text-red-700 mb-1"
+              >
+
+                <span class="icon-[material-symbols-light--delete-outline]"></span>
+
+              </button>
+
+
+            </div>
+
+
+
+            <!-- PEMBUAT RINCIAN -->
+            <div class="mt-3 text-sm text-gray-500">
+
+              Dibuat oleh:
+
+              <span class="font-semibold text-teal-600">
+                {{ item.user?.name || 'Tidak diketahui' }}
+              </span>
+
+            </div>
+
 
           </div>
+
         </div>
 
         <!-- DISKUSI -->
@@ -135,8 +270,9 @@
               class="flex-1 border p-2 rounded" />
 
             <button
+              v-if="task.status !== 'Selesai'"
               @click="kirimPesan"
-              class="bg-teal-600 text-white px-4 rounded">
+              class="bg-teal-600 text-white px-4 rounded hover:bg-teal-800">
               Kirim
             </button>
           </div>
@@ -203,7 +339,8 @@
           </select>
 
           <button @click="assignTask"
-            class="w-full bg-indigo-600 text-white py-2 rounded">
+            v-if="task.status !== 'Selesai'"
+            class="w-full bg-indigo-600 text-white py-2 rounded hover:bg-indigo-800">
             Tugaskan
           </button>
 
@@ -225,15 +362,36 @@
             class="w-full border p-2 rounded mb-2"
           />
 
-          <input 
-            type="file" 
-            ref="fileInput" 
-            @change="handleFile"
-            class="w-full mb-2 border-2 border-dashed border-gray-300 rounded-lg p-4 text-center cursor-pointer hover:border-teal-500"
-          />
+          <label 
+            v-if="task.status !== 'Selesai'"
+            class="flex flex-col items-center justify-center w-full p-6 border-2 border-dashed border-gray-300 rounded cursor-pointer hover:border-teal-500 hover:bg-teal-50 transition"
+          >
+            <span class="text-gray-500 mb-2">
+              Klik untuk pilih file
+            </span>
 
-          <button @click="uploadFile"
-            class="w-full bg-teal-600 text-white py-2 rounded my-2">
+           
+            <input 
+              type="file"
+              ref="fileInput"
+              @change="handleFile"
+              class="hidden"
+            />
+          </label>
+          <p 
+            v-if="fileName"
+            class="text-sm text-gray-600 mt-2"
+          >
+            File dipilih:
+            <span class="font-semibold">
+              {{ fileName }}
+            </span>
+          </p>
+
+          <button 
+            v-if="task.status !== 'Selesai'"
+            @click="uploadFile"
+            class="w-full bg-teal-600 text-white py-2 rounded my-2 hover:bg-teal-800">
             Upload
           </button>
 
@@ -256,8 +414,15 @@
               </a>
 
               <!-- DELETE -->
-              <button @click="deleteFile(file.id)"
-                class="text-red-500 hover:text-red-700">
+              <button 
+                @click="deleteFile(file.id)"
+                :disabled="user.role !== 'atasan' || task.status === 'Selesai'"
+                :class="
+                  user.role === 'atasan' && task.status !== 'Selesai'
+                    ? 'text-red-500 hover:text-red-700'
+                    : 'text-gray-400 cursor-not-allowed'
+                "
+              >
                 <span class="icon-[material-symbols-light--delete-outline]"></span>
               </button>
 
@@ -295,6 +460,7 @@ const diskusi = ref([])
 
 const selectedFile = ref(null)
 const fileInput = ref(null)
+const fileName = ref('')
 
 const assignedUser = ref('')
 const pesan = ref('')
@@ -327,8 +493,15 @@ const loadTask = async () => {
 const loadDetail = async () => {
   try {
     const res = await axios.get(`${API}/tugas/${route.params.id}/detail`)
-    details.value = res.data || []
-  } catch (e) {}
+
+    details.value = (res.data || []).map(item => ({
+      ...item,
+      tanggal: item.tanggal ? item.tanggal.substring(0,10) : ''
+    }))
+
+  } catch (e) {
+    console.log(e)
+  }
 }
 
 const loadUsers = async () => {
@@ -358,27 +531,99 @@ const loadProgress = async () => {
 
 /* ACTION */
 const addDetail = () => {
+
   details.value.push({
     deskripsi: '',
-    status: 'Penugasan',
+    status: 'Progres',
+    estimasi: '',
     tanggal: ''
   })
+
+}
+
+const canEditDetail = (item) => {
+
+  // tugas sudah selesai tidak boleh diedit
+  if (task.value.status === 'Selesai') {
+    return false
+  }
+
+
+  // atasan hanya melihat
+  if (user?.role === 'atasan') {
+    return false
+  }
+
+
+  // rincian baru
+  if (!item.id) {
+    return true
+  }
+
+
+  // karyawan hanya edit miliknya
+  return item.user_id === user.id
+
+}
+
+const ajukanSelesai = async (id) => {
+  try {
+
+    await axios.post(`${API}/tugas-detail/${id}/ajukan`, {
+      user_id: user.id
+    })
+
+
+    alert('Berhasil mengajukan selesai')
+
+    await loadDetail()
+
+  } catch(error) {
+
+    console.log(error)
+    alert(error.response?.data?.message || 'Gagal mengajukan selesai')
+
+  }
+}
+
+
+
+const setujuiSelesai = async(id)=>{
+
+ await axios.post(`${API}/tugas-detail/${id}/setujui`,{
+    user_id:user.id
+ })
+
+ await loadDetail()
+
+ alert('Tugas disetujui')
+
 }
 
 const removeDetail = async (index) => {
-  const item = details.value[index]
+  try {
+    const item = details.value[index]
 
-  if (item?.id) {
-    await axios.delete(`${API}/tugas-detail/${item.id}`)
+    if (item?.id) {
+      await axios.delete(`${API}/tugas-detail/${item.id}`)
+    }
+
+    details.value.splice(index, 1)
+
+    alert('Rincian tugas berhasil dihapus')
+  } catch (error) {
+    console.log(error)
+    alert('Gagal menghapus rincian tugas')
   }
-
-  details.value.splice(index, 1)
 }
 
 const saveTask = async () => {
   try {
+
     task.value.deadline = deadline.value
 
+
+    // simpan informasi tugas (khusus atasan)
     await axios.put(`${API}/tugas/${task.value.id}`, {
       kategori: task.value.kategori,
       bagian: task.value.bagian,
@@ -386,73 +631,179 @@ const saveTask = async () => {
       deadline: task.value.deadline
     })
 
-    await axios.post(`${API}/tugas/${task.value.id}/detail`, {
-      details: details.value
-    })
+
+    // hanya simpan rincian baru
+    const newDetails = details.value.filter(
+      item => !item.id
+    )
+
+
+    if (newDetails.length > 0) {
+
+      await axios.post(`${API}/tugas/${task.value.id}/detail`, {
+        details: newDetails,
+        user_id: user.id
+      })
+
+    }
+
 
     alert('Berhasil disimpan')
 
+
+    // reload data dari database
     await loadTask()
     await loadDetail()
     await loadProgress()
 
+
   } catch (e) {
+
     alert('Gagal simpan')
     console.error(e)
+
   }
 }
 
 const assignTask = async () => {
-  if (!assignedUser.value) return
+  if (!assignedUser.value) {
+    alert('Pilih karyawan terlebih dahulu')
+    return
+  }
 
-  await axios.post(`${API}/tugas/${task.value.id}/assign`, {
-    user_id: assignedUser.value
-  })
+  try {
+    await axios.post(`${API}/tugas/${task.value.id}/assign`, {
+      user_id: assignedUser.value
+    })
 
-  assignedUser.value = ''
-  await loadAssignedUsers()
+    assignedUser.value = ''
+    await loadAssignedUsers()
+
+    alert('Tugas berhasil ditugaskan')
+  } catch (error) {
+    console.log(error)
+    alert('Gagal menugaskan tugas')
+  }
 }
 
 const handleFile = (e) => {
+
   selectedFile.value = e.target.files[0]
+
+  if (selectedFile.value) {
+    fileName.value = selectedFile.value.name
+  }
+
 }
 
 const uploadFile = async () => {
+
+  if (!keteranganFile.value || keteranganFile.value.trim() === '') {
+    alert('Keterangan file wajib diisi!')
+    return
+  }
+
   if (!selectedFile.value) {
     alert('Pilih file dulu')
     return
   }
 
-  const formData = new FormData()
-  formData.append('file', selectedFile.value)
-  formData.append('keterangan', keteranganFile.value)
 
-  await axios.post(`${API}/tugas/${task.value.id}/lampiran`, formData)
+  try {
 
-  
-  await loadLampiran()
+    const formData = new FormData()
 
-  
-  selectedFile.value = null
-  fileInput.value.value = null
-  keteranganFile.value = ''
+    formData.append('file', selectedFile.value)
+    formData.append('keterangan', keteranganFile.value)
+
+
+    await axios.post(
+      `${API}/tugas/${task.value.id}/lampiran`,
+      formData,
+      {
+        headers:{
+          'Content-Type':'multipart/form-data'
+        }
+      }
+    )
+
+
+    alert('Lampiran berhasil diupload')
+
+
+    await loadLampiran()
+
+
+    selectedFile.value = null
+    fileName.value = ''
+    keteranganFile.value = ''
+
+    if(fileInput.value){
+      fileInput.value.value = ''
+    }
+
+
+  } catch(error){
+
+    console.log(error.response)
+
+    alert(
+      error.response?.data?.message 
+      || 'Gagal upload lampiran'
+    )
+
+  }
+
 }
 
 const deleteFile = async (id) => {
-  await axios.delete(`${API}/lampiran/${id}`)
-  await loadLampiran()
+  try {
+    await axios.delete(`${API}/lampiran/${id}`)
+    await loadLampiran()
+
+    alert('Lampiran berhasil dihapus')
+  } catch (error) {
+    console.log(error)
+    alert('Gagal menghapus lampiran')
+  }
 }
 
 const kirimPesan = async () => {
-  if (!pesan.value) return
 
-  await axios.post(`${API}/tugas/${task.value.id}/diskusi`, {
-    pesan: pesan.value,
-    user_id: user.id
-  })
+  if (!pesan.value.trim()) {
+    alert('Pesan tidak boleh kosong')
+    return
+  }
 
-  pesan.value = ''
-  await loadDiskusi()
+
+  try {
+
+    await axios.post(
+      `${API}/tugas/${task.value.id}/diskusi`,
+      {
+        user_id: user.id,
+        pesan: pesan.value
+      }
+    )
+
+
+    pesan.value = ''
+
+
+    await loadDiskusi()
+
+
+  } catch(error){
+
+    console.log(error.response)
+
+    alert(
+      error.response?.data?.message 
+      || 'Gagal mengirim diskusi'
+    )
+
+  }
+
 }
 
 const formatDate = (d) => new Date(d).toLocaleString()

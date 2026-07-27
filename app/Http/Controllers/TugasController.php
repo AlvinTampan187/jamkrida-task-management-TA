@@ -12,7 +12,7 @@ use Illuminate\Support\Facades\Storage;
 class TugasController extends Controller
 {
     /* =========================
-       🔥 HELPER: AUTO TERLAMBAT
+       HELPER: AUTO TERLAMBAT
     ========================= */
     private function checkTerlambat($tugas)
     {
@@ -26,7 +26,7 @@ class TugasController extends Controller
             $tugas->save();
         }
     }
-
+    
 
     /* =========================
        CREATE TUGAS
@@ -46,21 +46,27 @@ class TugasController extends Controller
         return response()->json($tugas);
     }
 
-
     /* =========================
        GET ALL
     ========================= */
     public function index()
     {
-        $tugas = Tugas::latest()->get();
+        $tugas = Tugas::with('detail')->latest()->get();
 
         foreach ($tugas as $t) {
+
+            // cek terlambat (punyamu tetap dipakai)
             $this->checkTerlambat($t);
+
+            // 🔴 TAMBAHAN: cek ada yang menunggu persetujuan
+            $t->ada_menunggu = $t->detail->contains(function ($d) {
+                return $d->status === 'Menunggu Persetujuan';
+            });
+
         }
 
         return $tugas;
     }
-
 
     /* =========================
        GET BY USER
@@ -79,22 +85,18 @@ class TugasController extends Controller
         return $tugas;
     }
 
-
     /* =========================
        SHOW DETAIL
     ========================= */
     public function show($id)
     {
         $t = Tugas::findOrFail($id);
-
         $this->checkTerlambat($t);
-
         return $t;
     }
 
-
     /* =========================
-       UPDATE (TANPA STATUS)
+       UPDATE
     ========================= */
     public function update(Request $request, $id)
     {
@@ -110,74 +112,99 @@ class TugasController extends Controller
         return response()->json($tugas);
     }
 
-
     /* =========================
-       DETAIL LIST
+       DETAIL LIST (SUDAH ADA USER)
     ========================= */
     public function detail($id)
     {
-        return TugasDetail::where('tugas_id', $id)->get();
+        return TugasDetail::with('user')
+            ->where('tugas_id', $id)
+            ->get();
     }
 
-
     /* =========================
-       SIMPAN DETAIL + AUTO STATUS
+       SIMPAN DETAIL
     ========================= */
     public function storeDetail(Request $request, $id)
     {
-        TugasDetail::where('tugas_id', $id)->delete();
-
         foreach ($request->details as $item) {
 
-            $status = trim($item['status'] ?? 'Penugasan');
-            $status = ucfirst(strtolower($status));
 
-            if (!in_array($status, ['Penugasan','Progres','Selesai'])) {
-                $status = 'Penugasan';
+            if(isset($item['id'])) {
+
+
+                TugasDetail::where('id',$item['id'])
+                ->update([
+                    'deskripsi'=>$item['deskripsi'],
+                    'tanggal'=>$item['tanggal'] ?? null,
+                ]);
+
+
+            } else {
+
+
+                TugasDetail::create([
+                    'tugas_id'=>$id,
+                    'deskripsi'=>$item['deskripsi'],
+                    'status'=>'Progres',
+                    'tanggal'=>$item['tanggal'] ?? null,
+                    'user_id'=>$request->user_id,
+                ]);
+
             }
 
-            TugasDetail::create([
-                'tugas_id' => $id,
-                'deskripsi' => $item['deskripsi'],
-                'status' => $status,
-                'tanggal' => $item['tanggal'] ?? null
-            ]);
         }
 
-        // 🔥 HITUNG STATUS
-        $total = TugasDetail::where('tugas_id', $id)->count();
 
-        $selesai = TugasDetail::where('tugas_id', $id)
-            ->where('status', 'Selesai')
+        $total = TugasDetail::where('tugas_id',$id)->count();
+
+        $selesai = TugasDetail::where('tugas_id',$id)
+            ->where('status','Selesai')
             ->count();
 
-        $progres = TugasDetail::where('tugas_id', $id)
-            ->where('status', 'Progres')
+
+        $progres = TugasDetail::where('tugas_id',$id)
+            ->where('status','Progres')
             ->count();
+
+
+        $menunggu = TugasDetail::where('tugas_id',$id)
+            ->where('status','Menunggu Persetujuan')
+            ->count();
+
 
         $tugas = Tugas::findOrFail($id);
 
-        if ($total == 0) {
-            $tugas->status = 'Penugasan';
-        } elseif ($selesai == $total) {
-            $tugas->status = 'Selesai';
-        } elseif ($progres > 0 || $selesai > 0) {
-            $tugas->status = 'Progres';
-        } else {
-            $tugas->status = 'Penugasan';
+
+        if($total == 0){
+
+            $tugas->status='Penugasan';
+
+        }elseif($selesai == $total){
+
+            $tugas->status='Selesai';
+
+        }elseif($progres > 0 || $menunggu > 0){
+
+            $tugas->status='Progres';
+
+        }else{
+
+            $tugas->status='Penugasan';
+
         }
 
-        // 🔥 CEK TERLAMBAT SETELAH UPDATE
+
         $this->checkTerlambat($tugas);
 
         $tugas->save();
 
+
         return response()->json([
-            'message' => 'Detail tersimpan',
-            'status' => $tugas->status
+            'message'=>'Detail tersimpan',
+            'status'=>$tugas->status
         ]);
     }
-
 
     /* =========================
        DELETE DETAIL
@@ -189,27 +216,20 @@ class TugasController extends Controller
         return response()->json(['message' => 'Detail dihapus']);
     }
 
-
     /* =========================
        PROGRESS %
     ========================= */
     public function progress($id)
     {
         $total = TugasDetail::where('tugas_id', $id)->count();
-
-        $selesai = TugasDetail::where('tugas_id', $id)
-            ->where('status', 'Selesai')
-            ->count();
+        $selesai = TugasDetail::where('tugas_id', $id)->where('status', 'Selesai')->count();
 
         $progress = $total > 0
             ? round(($selesai / $total) * 100)
             : 0;
 
-        return response()->json([
-            'progress' => $progress
-        ]);
+        return response()->json(['progress' => $progress]);
     }
-
 
     /* =========================
        ASSIGN
@@ -221,14 +241,12 @@ class TugasController extends Controller
         ]);
 
         $tugas = Tugas::findOrFail($id);
-
         $tugas->users()->syncWithoutDetaching([$request->user_id]);
 
         return response()->json([
             'message' => 'Tugas berhasil ditugaskan'
         ]);
     }
-
 
     /* =========================
        GET ASSIGNED USERS
@@ -240,25 +258,163 @@ class TugasController extends Controller
             ->users;
     }
 
-
-    // /* =========================
-    //    UNASSIGN
-    // ========================= */
-    // public function unassign($id, $userId)
-    // {
-    //     Tugas::findOrFail($id)
-    //         ->users()
-    //         ->detach($userId);
-
-    //     return response()->json([
-    //         'message' => 'Karyawan dilepas'
-    //     ]);
-    // }
-
+    /* =========================
+       DISKUSI LIST
+    ========================= */
+    public function getDiskusi($id)
+    {
+        return \App\Models\DiskusiTugas::with('user')
+            ->where('tugas_id', $id)
+            ->orderBy('created_at', 'asc')
+            ->get();
+    }
 
     /* =========================
-       UPLOAD FILE
+       KIRIM DISKUSI (AMAN)
     ========================= */
+   public function storeDiskusi(Request $request, $id)
+    {
+        $request->validate([
+            'user_id' => 'required|exists:users,id',
+            'pesan' => 'required|string'
+        ]);
+
+
+        $diskusi = \App\Models\DiskusiTugas::create([
+            'tugas_id' => $id,
+            'user_id' => $request->user_id,
+            'pesan' => $request->pesan
+        ]);
+
+
+        return response()->json([
+            'message'=>'Diskusi berhasil dikirim',
+            'data'=>$diskusi->load('user')
+        ]);
+    }
+
+    public function updateDetail(Request $request, $id)
+    {
+        $detail = TugasDetail::findOrFail($id);
+
+        $user = auth()->user();
+
+
+        // karyawan hanya boleh edit miliknya sendiri
+        if ($user->role === 'karyawan' && $detail->user_id != $user->id) {
+
+            return response()->json([
+                'message' => 'Anda tidak memiliki akses mengubah rincian ini'
+            ], 403);
+
+        }
+
+
+        $detail->update([
+            'deskripsi' => $request->deskripsi,
+            'tanggal' => $request->tanggal,
+        ]);
+
+        return response()->json([
+            'message'=>'Rincian berhasil diperbarui'
+        ]);
+    }
+
+    public function ajukanSelesai(Request $request, $id)
+    {
+        $detail = TugasDetail::findOrFail($id);
+
+
+        $user = User::find($request->user_id);
+
+
+        if (!$user) {
+            return response()->json([
+                'message'=>'User tidak ditemukan'
+            ],403);
+        }
+
+
+        if ($user->role !== 'karyawan') {
+            return response()->json([
+                'message'=>'Hanya karyawan yang dapat mengajukan selesai'
+            ],403);
+        }
+
+
+        if ($detail->user_id != $user->id) {
+
+            return response()->json([
+                'message'=>'Anda bukan pemilik rincian tugas ini'
+            ],403);
+
+        }
+
+
+        $detail->update([
+            'status'=>'Menunggu Persetujuan'
+        ]);
+
+
+        return response()->json([
+            'message'=>'Menunggu persetujuan atasan'
+        ]);
+    }
+    
+    public function setujuiSelesai(Request $request, $id)
+    {
+        $user = User::find($request->user_id);
+
+
+        if(!$user || $user->role !== 'atasan'){
+
+            return response()->json([
+                'message'=>'Hanya atasan yang dapat menyetujui'
+            ],403);
+
+        }
+
+
+        $detail = TugasDetail::findOrFail($id);
+
+
+        $detail->update([
+            'status'=>'Selesai'
+        ]);
+
+
+        // CEK STATUS TUGAS UTAMA
+        $total = TugasDetail::where('tugas_id',$detail->tugas_id)
+            ->count();
+
+        $selesai = TugasDetail::where('tugas_id',$detail->tugas_id)
+            ->where('status','Selesai')
+            ->count();
+
+
+        $tugas = Tugas::find($detail->tugas_id);
+
+
+        if($total > 0 && $selesai == $total){
+
+            $tugas->status='Selesai';
+
+        }else{
+
+            $tugas->status='Progres';
+
+        }
+
+
+        $tugas->save();
+
+
+        return response()->json([
+            'message'=>'Tugas berhasil diselesaikan',
+            'status'=>$tugas->status
+        ]);
+    }
+
     public function uploadLampiran(Request $request, $id)
     {
         Tugas::findOrFail($id);
@@ -284,10 +440,6 @@ class TugasController extends Controller
         ]);
     }
 
-
-    /* =========================
-       GET FILE
-    ========================= */
     public function getLampiran($id)
     {
         return Lampiran::where('tugas_id', $id)
@@ -295,10 +447,6 @@ class TugasController extends Controller
             ->get();
     }
 
-
-    /* =========================
-       DOWNLOAD FILE
-    ========================= */
     public function downloadLampiran($id)
     {
         $lampiran = Lampiran::findOrFail($id);
@@ -315,10 +463,6 @@ class TugasController extends Controller
         );
     }
 
-
-    /* =========================
-       DELETE FILE
-    ========================= */
     public function deleteLampiran($id)
     {
         $lampiran = Lampiran::findOrFail($id);
@@ -333,120 +477,150 @@ class TugasController extends Controller
             'message' => 'Berhasil dihapus'
         ]);
     }
+
     /* =========================
-       HALAMAN KINERJA
+    DASHBOARD KINERJA
     ========================= */
     public function dashboardKinerja()
     {
         $totalTugas = Tugas::count();
-        $tugasSelesai = Tugas::where('status', 'Selesai')->count();
-        $keterlambatan = Tugas::where('status', 'Terlambat')->count();
-        $tugasProses = Tugas::where('status', 'Progres')->count();
-        $tugasPending = Tugas::where('status', 'Penugasan')->count();
+
+        $tugasSelesai = Tugas::where('status', 'Selesai')
+            ->count();
+
+        $tugasProses = Tugas::where('status', 'Progres')
+            ->count();
+
+        $keterlambatan = Tugas::where('status', 'Terlambat')
+            ->count();
+
 
         return response()->json([
             'totalTugas' => $totalTugas,
             'tugasSelesai' => $tugasSelesai,
-            'keterlambatan' => $keterlambatan,
             'tugasProses' => $tugasProses,
-            'tugasPending' => $tugasPending,
-            'rataPenyelesaian' => 24 // sementara dummy
+            'keterlambatan' => $keterlambatan
         ]);
     }
 
+
+
+    /* =========================
+    PERFORMA KARYAWAN
+    ========================= */
     public function performaKaryawan()
     {
-        $users = User::with('tugas')
-            ->where('role', 'karyawan')
+        $karyawan = User::where('role', 'karyawan')
             ->get();
 
-        // total semua tugas di sistem
+
         $totalSemuaTugas = Tugas::count();
 
-        $data = $users->map(function ($user) use ($totalSemuaTugas) {
 
-            $total = $user->tugas->count();
+        $data = $karyawan->map(function ($user) use ($totalSemuaTugas) {
 
-            $selesai = $user->tugas
-                ->where('status', 'Selesai')
+
+            // jumlah tugas yang diberikan ke user
+            $tugasUser = Tugas::whereHas('users', function($q) use ($user){
+
+                $q->where('users.id', $user->id);
+
+            });
+
+
+            $totalTugas = (clone $tugasUser)->count();
+
+
+            $tugasSelesai = (clone $tugasUser)
+                ->where('status','Selesai')
                 ->count();
 
-            $terlambat = $user->tugas
-                ->filter(function ($t) {
-                    return $t->status !== 'Selesai'
-                        && $t->deadline < now();
-                })
+
+            $tugasTerlambat = (clone $tugasUser)
+                ->where('status','Terlambat')
                 ->count();
 
-            // ===============================
-            // 1. PERFORMANCE (INDIVIDU)
-            // ===============================
-            $performance = $total > 0
-                ? round(($selesai / $total) * 100)
+
+
+            // PERFORMANCE INDIVIDU
+            $performance = $totalTugas > 0
+                ? round(($tugasSelesai / $totalTugas) * 100)
                 : 0;
 
-            // ===============================
-            // 2. CONTRIBUTION (GLOBAL)
-            // ===============================
+
+
+            // CONTRIBUTION TERHADAP SEMUA TUGAS
             $contribution = $totalSemuaTugas > 0
-                ? round(($selesai / $totalSemuaTugas) * 100)
+                ? round(($tugasSelesai / $totalSemuaTugas) * 100)
                 : 0;
 
-            // ===============================
-            // 3. FINAL SCORE (70% + 30%)
-            // ===============================
-            $finalScore = round(
-                min(100, ($performance * 0.7) + ($contribution * 0.3))
+
+
+            // NILAI AKHIR
+            $skor = round(
+                ($performance * 0.7) +
+                ($contribution * 0.3)
             );
 
+
+
             return [
+
                 'id' => $user->id,
+
                 'name' => $user->name,
+
                 'bagian' => $user->bagian,
-                'totalTugas' => $total,
-                'tugasSelesai' => $selesai,
-                'tugasTerlambat' => $terlambat,
+
+
+                'totalTugas' => $totalTugas,
+
+                'tugasSelesai' => $tugasSelesai,
+
+                'tugasTerlambat' => $tugasTerlambat,
+
+
                 'performance' => $performance,
+
                 'contribution' => $contribution,
-                'skor' => $finalScore
+
+                'skor' => $skor
+
             ];
+
         });
 
-        // 🔥 SORT BERDASARKAN SKOR TERBAIK
-        return response()->json(
-            $data->sortByDesc('skor')->values()
-        );
+
+        return response()->json($data);
     }
 
-    /* =========================
-    DISKUSI LIST
-    ========================= */
-    public function getDiskusi($id)
+    public function detailKinerjaKaryawan($id)
     {
-        return \App\Models\DiskusiTugas::with('user')
-            ->where('tugas_id', $id)
-            ->orderBy('created_at', 'asc')
-            ->get();
-    }
+        $user = User::with([
+            'tugas' => function($q) use ($id){
+
+                $q->with([
+                    'detail' => function($detail) use ($id){
+
+                        $detail->where('user_id',$id);
+
+                    }
+                ]);
+
+            }
+        ])
+        ->findOrFail($id);
 
 
-    /* =========================
-    KIRIM DISKUSI
-    ========================= */
-    public function storeDiskusi(Request $request, $id)
-    {
-        if (!$request->user_id) {
-            return response()->json([
-                'error' => 'user_id kosong'
-            ], 400);
-        }
+        return response()->json([
 
-        $diskusi = \App\Models\DiskusiTugas::create([
-            'tugas_id' => $id,
-            'user_id' => $request->user_id,
-            'pesan' => $request->pesan
+            'nama'=>$user->name,
+
+            'bagian'=>$user->bagian,
+
+            'tugas'=>$user->tugas
+
         ]);
-
-        return response()->json($diskusi);
     }
+
 }

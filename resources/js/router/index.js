@@ -5,6 +5,12 @@ import PrintTugas from '@/pages/PrintTugas.vue'
 
 const routes = [
 
+  {
+    path: '/kinerja/karyawan/:id',
+    name: 'detail-kinerja-karyawan',
+    component: () => import('@/pages/DetailKinerjaKaryawan.vue')
+  },
+
   
 
   // redirect rute 

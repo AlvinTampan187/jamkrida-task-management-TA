@@ -65,7 +65,11 @@
         </div>
 
       </form>
-
+        <a href="/userguide.pdf" download>
+          <p class="mt-1 text-center text-gray-900 cursor-pointer hover:underline">
+            Buku Panduan Pengguna
+          </p>
+        </a>
     </div>
 
   </div>

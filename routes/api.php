@@ -50,3 +50,26 @@ Route::post('/tugas/{id}/diskusi', [TugasController::class, 'storeDiskusi']);
 Route::get('/dashboard-kinerja', [TugasController::class, 'dashboardKinerja']);
 Route::get('/performa-karyawan', [TugasController::class, 'performaKaryawan']);
 Route::get('/bagian', [UserController::class, 'getBagian']);
+
+//agar hanya bisa edit rincian tugas dia
+Route::put('/tugas-detail/{id}', [TugasController::class,'updateDetail']);
+
+//untuk selesai rincian tugas perlu disetujui atasan
+// AJUKAN SELESAI
+Route::post(
+    '/tugas-detail/{id}/ajukan',
+    [TugasController::class, 'ajukanSelesai']
+);
+
+
+// SETUJUI SELESAI
+Route::post(
+    '/tugas-detail/{id}/setujui',
+    [TugasController::class, 'setujuiSelesai']
+);
+
+//Detail Kinerja
+Route::get(
+'/kinerja/karyawan/{id}',
+[TugasController::class,'detailKinerjaKaryawan']
+);
